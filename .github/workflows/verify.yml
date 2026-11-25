@@ -1,0 +1,20 @@
+name: API verification
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test tests/Meter.Tests -c Release --logger "trx;LogFileName=tests.trx"
+      - run: dotnet publish src/Meter.Api -c Release -o artifacts/api
+      - run: dotnet list tests/Meter.Tests package --vulnerable --include-transitive
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-test-results
+          path: '**/TestResults/*.trx'
